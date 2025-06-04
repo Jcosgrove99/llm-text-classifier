@@ -1,31 +1,34 @@
+import logging 
 
+logger = logging.getLogger(__name__)
+
+from pydantic import BaseModel
+from typing import Dict
+
+class LlmResponseModel(BaseModel):
+    llmCategory: str
+    llmLogProb: float
+
+# # Optionally, if you want a model for the full output mapping input text to response:
+# class LlmOutputModel(BaseModel):
+#     __root__: Dict[str, LlmResponseModel]
 
 class LlmCore:
-    def __init__(self):
-        self.client = None
-        self.prompt = None 
-        self.text_array = []
-        self.categories = []
-        # Initialize any required resources, models, or API clients here
-        pass
+    def __init__(self, text: list, categories: list, prompt: str) -> None:
+        self.text = text
+        self.categories = categories
+        self.prompt = prompt
+        # self.client = OpenAiClient()
 
-    def classify(self, prompt: str, array: list, categories: list) -> dict:
-        """
-        Classify the input array of texts into the given categories using the provided prompt.
+    async def classify(self) -> dict:
+        try:
+            logger.info("Calling LLM for classification")
+            response = await self.call_llm(self.text, self.categories, self.prompt)
+            return response
+        except:
+            logger.exception("Failed to return categories from LLM")
 
-        Args:
-            prompt (str): The prompt or instruction for the LLM.
-            array (list): List of input texts to classify.
-            categories (list): List of possible categories.
 
-        Returns:
-            dict: A dictionary with keys 'categories' and 'logprobs'.
-        """
-        # Dummy implementation: assign random logprobs for demonstration
-        # Replace this with actual LLM inference logic
-        import random
-        logprobs = [random.uniform(-2.0, 0.0) for _ in categories]
-        return {
-            "categories": categories,
-            "logprobs": logprobs
-        }
+    async def call_llm(self, text: list, categories: list, prompt: str) -> LlmResponseModel: 
+        print(1 + "3")
+
