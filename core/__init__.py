@@ -10,6 +10,13 @@ class ColorFormatter(logging.Formatter):
     }
     RESET = '\033[0m'
 
+    def formatTime(self, record, datefmt=None):
+        # Only show time, no date, and remove last decimal (show milliseconds as 3 digits)
+        ct = self.converter(record.created)
+        t = "%02d:%02d:%02d" % (ct.tm_hour, ct.tm_min, ct.tm_sec)
+        msecs = int(record.msecs)
+        return f"{t}.{msecs:03d}"
+
     def format(self, record):
         # Save the original levelname
         original_levelname = record.levelname
@@ -25,7 +32,8 @@ class ColorFormatter(logging.Formatter):
 
 handler = logging.StreamHandler()
 handler.setFormatter(ColorFormatter(
-    "%(asctime)s [%(levelname)s] MODULE=%(name)s: MSG=%(message)s"
+    "%(asctime)s %(levelname)s | mod=%(name)s: msg=%(message)s",
+    datefmt=None  # We'll override formatTime anyway
 ))
 logging.basicConfig(
     level=logging.INFO,
