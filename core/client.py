@@ -4,6 +4,8 @@ import os
 import json
 from google import genai
 from pydantic import BaseModel
+from prompt_builder import PromptBuilder
+import pprint
 
 class Response(BaseModel):
     answer: bool
@@ -30,10 +32,9 @@ if api_key is None:
 
 # LLM class
 class Gemini:
-    def __init__(self, text: list, categories: list, prompt: str) -> None:
-        self.text = text
-        self.categories = categories
-        self.prompt = prompt
+    def __init__(self, model: str) -> None:
+        self.model = model
+        self.prompt_builder = PromptBuilder()
         self.client = genai.Client(api_key=api_key)
 
     def ask(self, prompt:str, model:str): #TODO: Specify the response type here
@@ -49,27 +50,33 @@ class Gemini:
             contents=prompt,
             config={
                 "response_mime_type": "application/json",
-                "response_schema": Response,
+                "response_schema": [ClassifyOutput],
             },
         )
 
         response_json = json.loads(response.text)
         return response_json.get("answer")
     
-    def classify(self, prompt:str, model:str, input_text:str) -> list[ResponseCategory]:
+    def classify(self, prompt:str, categories: list[str], input_text:list[str]) -> list[ResponseCategory]:
+        user_prompt = self.prompt_builder.build_user_prompt(prompt, categories, input_text)
+        print(user_prompt)
         response = self.client.models.generate_content(
-            model=model,
-            contents=prompt + "\n" + input_text,
+            model=self.model,
+            contents=user_prompt,
             config={
                 "response_mime_type": "application/json",
-                "response_schema": ResponseCategory,
+                "response_schema": ClassifyOutput,
             },
         )
         print(response.text)
 
-    
-llm = Gemini()
+
+llm = Gemini(GEMINI_2_0_FLASH)
+llm.classify("You are an expert economist. Place these in the following categories", 
+             ["good", "bad", "nuetral"], 
+             ["whats wrong with you?!", "the food was great"]
+             )
 # response = llm.ask("is it working?", GEMINI_2_0_FLASH)
 # response = llm.ask_bool("Is it true that the sky is blue?", GEMINI_2_0_FLASH)
-llm.classify("Tell me if this is good or bad", GEMINI_2_0_FLASH, "this food was awful")
+#llm.classify("Tell me if this is good or bad", GEMINI_2_0_FLASH, "this food was awful")
 

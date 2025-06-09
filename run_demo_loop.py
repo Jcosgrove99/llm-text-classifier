@@ -1,4 +1,3 @@
-
 from core.llm_core import LlmCore
 import pandas as pd
 
@@ -14,7 +13,7 @@ llm_core = LlmCore(text=text_array, categories=categories, prompt=prompt)
 import asyncio
 
 async def demo_loop():
-    r = await llm_core.classify()
+    response = await llm_core.classify()
 
 if __name__ == "__main__":
     asyncio.run(demo_loop())
